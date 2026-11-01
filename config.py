@@ -1,4 +1,5 @@
 import pygame
+import numpy as np
 
 # --- Screen size ---
 SCREEN_WIDTH = 432
@@ -10,7 +11,14 @@ TEXT_COLOR  = (235, 240, 255)
 NEON_PINK   = (255, 60, 170)    # chữ Game over
 NEON_CYAN   = (60, 230, 255)    # chữ hướng dẫn
 
-# --- Physical of Bird ---
+# -- Setting of genetic algorithm
+POP_SIZE = 30
+NUM_INPUTS = 5     # number input of no ron
+NUM_PARAMETERS = 6
+MUTATION_RATE = 0.1
+MUTATION_SIGMA = 0.3
+
+# --- Bird ---
 BIRD_WIDTH = 51
 BIRD_HEIGHT = 36
 BIRD_X = SCREEN_WIDTH // 5
@@ -22,11 +30,7 @@ FLAP_VELOCITY = 7 	# speed up of bird
 TUBE_WIDTH = 78 
 TUBE_HEIGHT = 480
 TUBE_VELOCITY = 2   # Speed of tube move to the left
-GATE_HEIGHT = 100	# distance of 2 tubes (tube and tube_inv)
+GATE_HEIGHT = 150	# distance of 2 tubes (tube and tube_inv)
 TUBE_INTERVAL = 250	# time next tube appear
 
-# -- Setting of genetic algorithm
-POP_SIZE = 30
-NUM_INPUTS = 5     # number input of no ron
-MUTATION_RATE = 0.1
-MUTATION_SIGMA = 0.3
+

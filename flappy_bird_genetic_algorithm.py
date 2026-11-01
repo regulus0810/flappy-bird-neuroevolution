@@ -5,20 +5,51 @@ import numpy as np
 import random
 import json
 
-from config import *
-from brain impor *
-from entities import *
-from genetic_algorithm import *
+import config
+import brain
+import entities
+import genetic_algorithm
+
+# --- Screen size ---
+SCREEN_WIDTH = config.SCREEN_WIDTH
+SCREEN_HEIGHT = config.SCREEN_HEIGHT
+FPS = config.FPS
+
+# --- Color ---
+TEXT_COLOR  = config.TEXT_COLOR
+NEON_PINK   = config.NEON_PINK    # chữ Game over
+NEON_CYAN   = config.NEON_CYAN    # chữ hướng dẫn
+
+# --- Bird ---
+BIRD_WIDTH = config.BIRD_WIDTH
+BIRD_HEIGHT = config.BIRD_HEIGHT
+BIRD_X = SCREEN_WIDTH // 5
+BIRD_START_Y = SCREEN_HEIGHT // 2
+GRAVITY = config.GRAVITY
+FLAP_VELOCITY = config.FLAP_VELOCITY 	# speed up of bird
+
+# --- Tube ---
+TUBE_WIDTH = config.TUBE_WIDTH 
+TUBE_HEIGHT = config.TUBE_HEIGHT
+TUBE_VELOCITY = config.TUBE_VELOCITY   # Speed of tube move to the left
+GATE_HEIGHT = config.GATE_HEIGHT	# distance of 2 tubes (tube and tube_inv)
+TUBE_INTERVAL = config.TUBE_INTERVAL	# time next tube appear
+
+# -- Setting of genetic algorithm
+POP_SIZE = config.POP_SIZE
+NUM_INPUTS = config.NUM_INPUTS     # number input of no ron
+MUTATION_RATE = config.MUTATION_RATE
+MUTATION_SIGMA = config.MUTATION_SIGMA
 
 pygame.init()
-screen = pygame.display.set_mode((config.SCREEN_WIDTH, config.SCREEN_HEIGHT))
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("Flappy Bird")
 running = True
 clock = pygame.time.Clock()
 
 # --- Background image ---
 background_image = pygame.image.load("assets/background-day.png").convert()
-background_image = pygame.transform.scale(background_image, (WIDTH, HEIGHT))
+background_image = pygame.transform.scale(background_image, (SCREEN_WIDTH, SCREEN_HEIGHT))
 # --- Bird image ---
 bird_image = pygame.image.load("assets/yellowbird-midflap.png").convert_alpha()
 bird_image = pygame.transform.scale(bird_image, (BIRD_WIDTH, BIRD_HEIGHT))
@@ -31,15 +62,15 @@ tube_image_top = pygame.transform.flip(tube_image_down, False, True)
 gameover_image = pygame.image.load("assets/gameover.png").convert_alpha()
 
 # Create a population
-population_bird = [Bird(BIRD_START_Y, bird_image, brain = NeuralBrain(num_inputs=NUM_INPUTS)) for _ in range(POP_SIZE)]
+population_bird = [entities.Bird(BIRD_START_Y, bird_image) for _ in range(POP_SIZE)]
 # --- Tube ---
 tube1_x = SCREEN_WIDTH
 tube2_x = tube1_x + TUBE_INTERVAL
 tube3_x = tube2_x + TUBE_INTERVAL
 tubes = [
-	Tube(tube1_x),
-	Tube(tube2_x),
-	Tube(tube3_x)
+	entities.Tube(tube1_x, tube_image_top, tube_image_down),
+	entities.Tube(tube2_x, tube_image_top, tube_image_down),
+	entities.Tube(tube3_x, tube_image_top, tube_image_down)
 ]
 
 # --- Init Genetic Algorithm
@@ -65,7 +96,6 @@ while running:
 			if nearest_tube is None or tube.x < nearest_tube.x:
 				nearest_tube = tube
 		
-
 	# --- Update live bird ---
 	alive_birds = [b for b in population_bird if b.alive]
 
@@ -78,7 +108,7 @@ while running:
 			# Draw 2 line from bird center to top_tube and bottom_tube
 			pygame.draw.line(screen, NEON_PINK, (bird.x + BIRD_WIDTH //2, bird.y + BIRD_HEIGHT // 2), (nearest_tube.x, nearest_tube.y), width=2)
 			pygame.draw.line(screen, NEON_CYAN, (bird.x + BIRD_WIDTH //2, bird.y + BIRD_HEIGHT // 2), (nearest_tube.x, nearest_tube.y + GATE_HEIGHT), width=2)
-			inputs = get_inputs(bird, nearest_tube)
+			inputs = entities.get_inputs(bird, nearest_tube)
 			bird.think_and_act(inputs)
 			
 		# Check collide with sky and base
@@ -117,7 +147,7 @@ while running:
 				# terminal
 				if bird.score == 50:
 					pausing = True
-					save_best_bird(bird.chromosome, "best_bird.json")
+					brain.save_best_bird(bird.chromosome, "best_bird.json")
 		if tube.x + TUBE_WIDTH <= BIRD_X and not tube.passed:
 			# check tube pass all live bird
 			tube.passed = True
@@ -131,14 +161,6 @@ while running:
 	# --- Draw all survival bird ---
 	for bird in alive_birds:
 		screen.blit(bird.image, (bird.x, bird.y))
-
-
-	if pausing:
-		screen.blit(gameover_image, (100, 100))
-		game_over_txt = font.render("Game over, score:" + str(score), True, TEXT_COLOR)
-		screen.blit(game_over_txt, (WIDTH // 2 - 110, 200))
-		press_space_txt = font.render("Press space to continue", True, TEXT_COLOR)
-		screen.blit(press_space_txt, (WIDTH // 2 - 110, 240))
 
 	# --- Hiển thị thông tin ---
 	gen_txt   = font.render(f"Generation: {generation}", True, TEXT_COLOR)
@@ -160,9 +182,9 @@ while running:
 
 		# Reset tube
 		tubes = [
-			Tube(tube1_x),
-			Tube(tube2_x),
-			Tube(tube3_x)
+			entities.Tube(tube1_x, tube_image_top, tube_image_down),
+			entities.Tube(tube2_x, tube_image_top, tube_image_down),
+			entities.Tube(tube3_x, tube_image_top, tube_image_down)
 		]
 
 	# --- Event button
@@ -170,20 +192,5 @@ while running:
 		if event.type == pygame.QUIT:
 			# Quit the program
 			running = False
-
-		if event.type == pygame.KEYDOWN:
-			if event.key == pygame.K_SPACE:
-				if pausing:
-					bird.y = bird_y
-					bird.velocity = 0
-					score = 0
-					tubes = [
-						Tube(tube1_x),
-						Tube(tube2_x),
-						Tube(tube3_x)
-					]
-					pausing = False
-				else:
-					bird.fly_up()
 	pygame.display.flip()
 pygame.quit()

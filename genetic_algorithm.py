@@ -1,8 +1,8 @@
 import random
 
-from config import *
-from brain import NeuralBrain
-from entities import *
+import config
+import brain
+import entities
 
 # --- Built Geenetic algorithm
 class GeneticAlgorithm:
@@ -16,9 +16,11 @@ class GeneticAlgorithm:
 		# Crossover: get random each gene from dad and mama
 		child_chromosome = []
 		for i in range(len(parent_dad.chromosome)):
-			d = abs(parent_dad.chromosome[i] - parent_mom.chromosome[i])
-			min_val = min(parent_dad.chromosome[i], parent_mom.chromosome[i] - 0.2 * d)
-			max_val = max(parent_dad.chromosome[i], parent_mom.chromosome[i] + 0.2 * d)
+			c_min = min(parent_dad.chromosome[i], parent_mom.chromosome[i])
+			c_max = max(parent_dad.chromosome[i], parent_mom.chromosome[i])
+			d = c_max - c_min
+			min_val = c_min - 0.2 * d
+			max_val = c_max + 0.2 * d
 			child_chromosome.append(random.uniform(min_val, max_val))
 		return child_chromosome
 
@@ -26,41 +28,38 @@ class GeneticAlgorithm:
 		# Mutation gene: ech gene have 10% opportunity for small change
 		for i in range(len(child_chromosome)):
 			if random.uniform(0, 1) < mutation_rate:
-				child_chromosome[i] += random.gauss(mu=MUTATION_RATE, sigma=MUTATION_SIGMA)
+				child_chromosome[i] += random.gauss(mu=config.MUTATION_RATE, sigma=config.MUTATION_SIGMA)
 		return child_chromosome
 
 	def nex_generation(self, population):
 		# Create new generation from present population
+
+		# 1. Get best birds from population
 		survivors = self.selection(population)
-		new_population = []
+		next_generation = []
+		bird_image = survivors[0].image
 
-		# Keep the best individual bird (elitism)
-		best_brain = survivors[0].brain
-		elite_brain = NeuralBrain(bird_y)
-		elite.chromosome = best.chromosome[:]
-		print("-" * 30)
-		print(elite.chromosome)
-		new_population.append(elite)
+		# 2. Keep the best individual bird (elitism)
+		best_bird = survivors[0]
+		elite = entities.Bird(config.BIRD_START_Y, bird_image)
+		elite.chromosome = list(best_bird.chromosome)
+		next_generation.append(elite)
 
-		# Create the remaining offstring using crossover + mutate
-		while len(new_population) < POP_SIZE:
+		# 3. Create the remaining offstring using crossover + mutate
+		while len(next_generation) < config.POP_SIZE:
+			# Choose random father and mother from survivors
 			parent_dad = random.choice(survivors)
 			parent_mom = random.choice(survivors)
-			child = Bird(bird_y)
+
+			# Check
+			if len(survivors) > 1:
+				while parent_dad == parent_mom:
+					parent_mom = random.choice(survivors)
+
+			child = entities.Bird(config.BIRD_START_Y, bird_image)
 			child.chromosome = self.crossover(parent_dad, parent_mom)
 			child.chromosome = self.mutate(child.chromosome)
-			new_population.append(child)
+			next_generation.append(child)
 		
-		return new_population
+		return next_generation
 
-def save_best_bird(chromosome, filename="best_bird.json"):
-	# save best gene to txt
-	with open(filename, "w") as f:
-		json.dump(chromosome, f, indent=4)
-	print(f"Save model successfully to {filename}")
-
-def load_best_bird(filename="best_bird.json"):
-	# Read chromosome from best_bird.txt
-	with open(filename, "r") as f:
-		chromosome = json.load(f)
-	return chromosome

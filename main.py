@@ -1,255 +1,203 @@
 import pygame
-import math
-import numpy as np
 import random
-from random import randint
-import json
 import os
 
-# --- Hàm đọc bộ gene tốt nhất đã lưu ---
-def load_best_bird(filename="best_bird.json"):
-    if os.path.exists(filename):
-        with open(filename, "r") as f:
-            chromosome = json.load(f)
-        print(f"Đã nạp thành công bộ gene vô địch từ: {filename}")
-        return chromosome
-    print(f"Không tìm thấy file {filename}, AI sẽ dùng gene ngẫu nhiên!")
-    return [random.uniform(-3, 3) for _ in range(6)]
+import config
+import entities
+import brain
 
-# --- Color ---
-TUBE_COLOR  = (56, 240, 43)
-TEXT_COLOR  = (235, 240, 255)
-NEON_CYAN   = (60, 230, 255)    # Màu cho người chơi
-NEON_PINK   = (255, 60, 170)    # Màu cho AI
-
-# --- Screen ---
-WIDTH, HEIGHT = 432, 768
-
+# 1. Khởi tạo Pygame và Cửa sổ Game
 pygame.init()
+WIDTH, HEIGHT = config.SCREEN_WIDTH, config.SCREEN_HEIGHT
+FPS = config.FPS
+
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Flappy Bird - Solo với AI")
-running = True
+pygame.display.set_caption("Flappy Bird - Solo với AI (Chơi cùng AI)")
 clock = pygame.time.Clock()
-
-# --- Bird ---
-BIRD_WIDTH, BIRD_HEIGHT = 51, 36
-BIRD_X = WIDTH // 5
-bird_y = HEIGHT // 2
-GRAVITY = 0.5
-FLAP_VELOCITY = 7 
-
-# --- Tube ---
-TUBE_WIDTH, TUBE_HEIGHT = 78, 480
-TUBE_VELOCITY = 2
-GATE_HEIGHT = 170
-TUBE_INTERVAL = 250
-tube1_x = WIDTH
-tube2_x = tube1_x + TUBE_INTERVAL
-tube3_x = tube2_x + TUBE_INTERVAL
-
-# --- Hình ảnh ---
-background_image = pygame.image.load("assets/background-day.png").convert()
-background_image = pygame.transform.scale(background_image, (WIDTH, HEIGHT))
-
-# Ảnh chim Người chơi (Màu vàng gốc)
-player_bird_image = pygame.image.load("assets/yellowbird-midflap.png").convert_alpha()
-player_bird_image = pygame.transform.scale(player_bird_image, (BIRD_WIDTH, BIRD_HEIGHT))
-
-# Ảnh chim AI (Dùng chim xanh - Bluebird)
-ai_bird_image = pygame.image.load("assets/bluebird-midflap.png").convert_alpha()
-ai_bird_image = pygame.transform.scale(ai_bird_image, (BIRD_WIDTH, BIRD_HEIGHT))
-
-# Ống
-tube_image_down = pygame.image.load("assets/pipe-green.png").convert_alpha()
-tube_image_down = pygame.transform.scale(tube_image_down, (TUBE_WIDTH, TUBE_HEIGHT))
-tube_image_top = pygame.transform.flip(tube_image_down, False, True)
-
-gameover_image = pygame.image.load("assets/gameover.png").convert_alpha()
-
-# --- Lớp Chim ---
-class Bird:
-    def __init__(self, y, image, is_ai=False):
-        self.x = BIRD_X
-        self.y = y
-        self.velocity = 0
-        self.flap = FLAP_VELOCITY
-        self.image = image
-        self.is_ai = is_ai
-        self.alive = True
-        self.score = 0
-        self.chromosome = [0.0] * 6
-
-    def fly_up(self):
-        self.velocity = 0
-        self.velocity -= self.flap
-
-    def fly_down(self):
-        self.y += self.velocity
-        self.velocity += GRAVITY
-
-    def get_rect(self):
-        return pygame.Rect(self.x, self.y, BIRD_WIDTH, BIRD_HEIGHT)
-
-    # Não của chim AI
-    def think(self, inputs):
-        y = 0
-        for i in range(len(inputs)):
-            y += self.chromosome[i] * inputs[i]
-        y += self.chromosome[-1]
-
-        output = 1 / (1 + np.exp(-y))
-        if output > 0.45 and self.velocity > 0:
-            self.fly_up()
-
-# --- Lớp Ống ---
-class Tube:
-    def __init__(self, x):
-        self.x = x
-        self.y = randint(int(HEIGHT * 0.3), int(HEIGHT * 0.6))
-        self.tube_image_down = tube_image_down
-        self.tube_image_top = tube_image_top
-        self.passed = False
-
-# --- Hàm tính toán đầu vào cho AI ---
-def get_inputs(bird, tube):
-    bird_y_center = bird.y + BIRD_HEIGHT // 2
-    bird_velo = bird.velocity
-    dis_nearest_tube = tube.x - (bird.x + BIRD_WIDTH // 2)
-    dis_top_tube = bird_y_center - tube.y
-    dis_buttom_tube = (tube.y + GATE_HEIGHT) - bird_y_center
-
-    return [
-        bird_y_center / HEIGHT,
-        bird_velo / 10,
-        dis_nearest_tube / WIDTH,
-        dis_top_tube / HEIGHT,
-        dis_buttom_tube / HEIGHT
-    ]
-
-# --- Khởi tạo 2 đấu thủ ---
-bird_player = Bird(bird_y, player_bird_image, is_ai=False)
-bird_ai = Bird(bird_y, ai_bird_image, is_ai=True)
-bird_ai.chromosome = load_best_bird("best_bird.json")  # Nạp gene vô địch cho AI
-
-tubes = [Tube(tube1_x), Tube(tube2_x), Tube(tube3_x)]
-
-font = pygame.font.SysFont("sans", 24, bold=True)
-small_font = pygame.font.SysFont("sans", 16, bold=True)
+running = True
 pausing = False
 
-# --- Vòng lặp chính ---
+# 2. Phông chữ hiển thị
+font = pygame.font.SysFont("sans", 24, bold=True)
+small_font = pygame.font.SysFont("sans", 16, bold=True)
+big_font = pygame.font.SysFont("sans", 36, bold=True)
+
+# 3. Tải hình ảnh (kèm fallback dự phòng)
+ASSETS_DIR = "assets"
+
+def load_image(filename, size=None):
+	path = os.path.join(ASSETS_DIR, filename)
+	if os.path.exists(path):
+		try:
+			img = pygame.image.load(path)
+			img = img.convert_alpha() if filename.endswith(".png") else img.convert()
+			if size:
+				img = pygame.transform.scale(img, size)
+			return img
+		except pygame.error:
+			return None
+	return None
+
+bg_img = load_image("background-day.png", (WIDTH, HEIGHT))
+player_img = load_image("yellowbird-midflap.png", (config.BIRD_WIDTH, config.BIRD_HEIGHT))
+ai_img = load_image("bluebird-midflap.png", (config.BIRD_WIDTH, config.BIRD_HEIGHT))
+pipe_raw = load_image("pipe-green.png")
+gameover_img = load_image("gameover.png")
+
+if pipe_raw:
+	pipe_down_img = pygame.transform.scale(pipe_raw, (config.TUBE_WIDTH, HEIGHT))
+	pipe_top_img = pygame.transform.flip(pipe_down_img, False, True)
+else:
+	pipe_down_img = None
+	pipe_top_img = None
+
+# 4. Hàm khởi tạo / Reset ván đấu
+def reset_game():
+	player = entities.Bird(config.BIRD_START_Y)
+	ai = entities.Bird(config.BIRD_START_Y)
+
+	# Nạp bộ gene tốt nhất cho AI từ file best_bird.json
+	ai.chromosome = brain.load_best_bird("best_bird.json")
+
+	# Khởi tạo 4 cột để phủ kín chiều rộng màn hình 700px
+	tubes_list = [entities.Tube(WIDTH + i * config.TUBE_INTERVAL) for i in range(4)]
+	return player, ai, tubes_list
+
+bird_player, bird_ai, tubes = reset_game()
+
+# 5. Vòng lặp trò chơi
 while running:
-    clock.tick(60)
+	clock.tick(FPS)
 
-    # 1. Vẽ nền
-    screen.blit(background_image, (0, 0))
+	# --- A. Vẽ hình nền ---
+	if bg_img:
+		screen.blit(bg_img, (0, 0))
+	else:
+		screen.fill(config.BACKGROUND_COLOR)
 
-    # 2. Tìm ống gần nhất phía trước
-    nearest_tube = None
-    for tube in tubes:
-        if tube.x + TUBE_WIDTH >= BIRD_X:
-            if nearest_tube is None or tube.x < nearest_tube.x:
-                nearest_tube = tube
+	# --- B. Tìm cột gần nhất phía trước chim ---
+	ahead_tubes = [t for t in tubes if t.x + t.width >= config.BIRD_X]
+	nearest_tube = min(ahead_tubes, key=lambda t: t.x) if ahead_tubes else None
 
-    # 3. Cập nhật AI
-    if bird_ai.alive and not pausing:
-        if nearest_tube:
-            inputs = get_inputs(bird_ai, nearest_tube)
-            bird_ai.think(inputs)
-        bird_ai.fly_down()
-        if bird_ai.y <= 0 or bird_ai.y + BIRD_HEIGHT >= HEIGHT:
-            bird_ai.alive = False
+	# --- C. Cập nhật AI ---
+	if bird_ai.alive and not pausing:
+		if nearest_tube:
+			inputs = entities.get_inputs(bird_ai, nearest_tube)
+			bird_ai.think_and_act(inputs)
+		bird_ai.fly_down()
+		if bird_ai.y <= 0 or bird_ai.y + bird_ai.height >= HEIGHT:
+			bird_ai.alive = False
 
-    # 4. Cập nhật Người chơi
-    if bird_player.alive and not pausing:
-        bird_player.fly_down()
-        if bird_player.y <= 0 or bird_player.y + BIRD_HEIGHT >= HEIGHT:
-            bird_player.alive = False
+	# --- D. Cập nhật Người chơi ---
+	if bird_player.alive and not pausing:
+		bird_player.fly_down()
+		if bird_player.y <= 0 or bird_player.y + bird_player.height >= HEIGHT:
+			bird_player.alive = False
 
-    # 5. Nếu cả 2 đều chết -> Tạm dừng ván đấu
-    if not bird_player.alive and not bird_ai.alive:
-        pausing = True
+	# --- E. Vẽ tia nhìn của AI (laser vision) ---
+	if bird_ai.alive and nearest_tube:
+		ai_center = (bird_ai.x + bird_ai.width // 2, bird_ai.y + bird_ai.height // 2)
+		pygame.draw.line(screen, config.NEON_PINK, ai_center, (nearest_tube.x, nearest_tube.height), width=2)
+		pygame.draw.line(screen, config.NEON_CYAN, ai_center, (nearest_tube.x, nearest_tube.height + nearest_tube.gate_height), width=2)
 
-    # 6. Vẽ và di chuyển ống
-    for tube in tubes:
-        tube_rect_top = screen.blit(tube_image_top, (tube.x, tube.y - TUBE_HEIGHT))
-        tube_rect_down = screen.blit(tube_image_down, (tube.x, tube.y + GATE_HEIGHT))
+	# --- F. Cập nhật và vẽ các cột ---
+	for tube in tubes:
+		top_rect = pygame.Rect(tube.x, 0, tube.width, tube.height)
+		down_rect = pygame.Rect(tube.x, tube.height + tube.gate_height, tube.width, HEIGHT - tube.height - tube.gate_height)
 
-        if not pausing:
-            tube.x -= TUBE_VELOCITY
+		# Vẽ ống
+		if pipe_top_img and pipe_down_img:
+			screen.blit(pipe_top_img, (tube.x, tube.height - HEIGHT))
+			screen.blit(pipe_down_img, (tube.x, tube.height + tube.gate_height))
+		else:
+			pygame.draw.rect(screen, config.TUBE_COLOR, top_rect)
+			pygame.draw.rect(screen, config.TUBE_COLOR, down_rect)
 
-        # Kiểm tra va chạm ống
-        for b in [bird_player, bird_ai]:
-            if b.alive:
-                rect = b.get_rect()
-                if rect.colliderect(tube_rect_top) or rect.colliderect(tube_rect_down):
-                    b.alive = False
+		# Di chuyển cột sang trái
+		if not pausing:
+			tube.x -= tube.velocity
 
-        # Cập nhật điểm
-        if tube.x + TUBE_WIDTH <= BIRD_X and not tube.passed:
-            if bird_player.alive:
-                bird_player.score += 1
-            if bird_ai.alive:
-                bird_ai.score += 1
-            tube.passed = True
+		# Kiểm tra va chạm với cột
+		for b in [bird_player, bird_ai]:
+			if b.alive:
+				rect = b.get_rect()
+				if rect.colliderect(top_rect) or rect.colliderect(down_rect):
+					b.alive = False
 
-        # Tái tạo ống mới
-        if tube.x <= -TUBE_WIDTH:
-            tube.x += len(tubes) * TUBE_INTERVAL
-            tube.y = randint(int(HEIGHT * 0.3), int(HEIGHT * 0.6))
-            tube.passed = False
+		# Cập nhật điểm khi vượt qua cột
+		if tube.x + tube.width <= config.BIRD_X and not tube.passed:
+			if bird_player.alive:
+				bird_player.score += 1
+			if bird_ai.alive:
+				bird_ai.score += 1
+			tube.passed = True
 
-    # 7. Vẽ chim và nhãn tên trên đầu
-    if bird_ai.alive:
-        screen.blit(bird_ai.image, (bird_ai.x, bird_ai.y))
-        tag_ai = small_font.render("AI", True, NEON_PINK)
-        screen.blit(tag_ai, (bird_ai.x + 15, bird_ai.y - 18))
-    if bird_player.alive:
-        screen.blit(bird_player.image, (bird_player.x, bird_player.y))
-        tag_you = small_font.render("YOU", True, NEON_CYAN)
-        screen.blit(tag_you, (bird_player.x + 10, bird_player.y - 18))
+		# Tái tạo cột mới khi đi hết màn hình bên trái
+		if tube.x <= -tube.width:
+			max_x = max(t.x for t in tubes)
+			tube.x = max_x + config.TUBE_INTERVAL
+			tube.height = random.randint(int(HEIGHT * 0.3), int(HEIGHT * 0.6))
+			tube.passed = False
 
+	# --- G. Vẽ chim và nhãn tên ---
+	# Chim AI
+	if bird_ai.alive:
+		if ai_img:
+			screen.blit(ai_img, (bird_ai.x, bird_ai.y))
+		else:
+			pygame.draw.rect(screen, config.NEON_PINK, (bird_ai.x, bird_ai.y, bird_ai.width, bird_ai.height))
+		tag_ai = small_font.render("AI", True, config.NEON_PINK)
+		screen.blit(tag_ai, (bird_ai.x + bird_ai.width // 2 - tag_ai.get_width() // 2, bird_ai.y - 18))
 
-    # 8. Bảng điểm thi đấu song song
-    player_score_txt = font.render(f"YOU: {bird_player.score}", True, NEON_CYAN)
-    ai_score_txt     = font.render(f"AI: {bird_ai.score}", True, NEON_PINK)
-    screen.blit(player_score_txt, (20, 20))
-    screen.blit(ai_score_txt, (WIDTH - 120, 20))
+	# Chim Người chơi
+	if bird_player.alive:
+		if player_img:
+			screen.blit(player_img, (bird_player.x, bird_player.y))
+		else:
+			pygame.draw.rect(screen, config.NEON_CYAN, (bird_player.x, bird_player.y, bird_player.width, bird_player.height))
+		tag_you = small_font.render("YOU", True, config.NEON_CYAN)
+		screen.blit(tag_you, (bird_player.x + bird_player.width // 2 - tag_you.get_width() // 2, bird_player.y - 18))
 
-    # 9. Màn hình Game Over & Phân định Thắng/Thua
-    if pausing:
-        screen.blit(gameover_image, (WIDTH // 2 - 96, 180))
-        
-        # Xác định ai thắng
-        if bird_player.score > bird_ai.score:
-            result_txt = font.render("YOU WIN!", True, NEON_CYAN)
-        elif bird_player.score < bird_ai.score:
-            result_txt = font.render("AI WINS!", True, NEON_PINK)
-        else:
-            result_txt = font.render("DRAW (HÒA)!", True, TEXT_COLOR)
+	# --- H. Bảng điểm song song ---
+	player_score_txt = font.render(f"YOU: {bird_player.score}", True, config.NEON_CYAN)
+	ai_score_txt = font.render(f"AI: {bird_ai.score}", True, config.NEON_PINK)
+	screen.blit(player_score_txt, (20, 20))
+	screen.blit(ai_score_txt, (WIDTH - ai_score_txt.get_width() - 20, 20))
 
-        screen.blit(result_txt, (WIDTH // 2 - 80, 250))
-        press_space_txt = small_font.render("Press SPACE to play again", True, TEXT_COLOR)
-        screen.blit(press_space_txt, (WIDTH // 2 - 100, 300))
+	# --- I. Trạng thái Game Over & Phân định thắng thua ---
+	if not bird_player.alive and not bird_ai.alive:
+		pausing = True
 
-    # 10. Sự kiện phím bấm
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
+	if pausing:
+		if gameover_img:
+			screen.blit(gameover_img, (WIDTH // 2 - gameover_img.get_width() // 2, HEIGHT // 2 - 120))
 
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_SPACE:
-                if pausing:
-                    # Reset lại cả 2 đấu thủ và cột
-                    bird_player = Bird(bird_y, player_bird_image, is_ai=False)
-                    bird_ai = Bird(bird_y, ai_bird_image, is_ai=True)
-                    bird_ai.chromosome = load_best_bird("best_bird.json")
-                    tubes = [Tube(tube1_x), Tube(tube2_x), Tube(tube3_x)]
-                    pausing = False
-                else:
-                    if bird_player.alive:
-                        bird_player.fly_up()
+		# Xác định kết quả
+		if bird_player.score > bird_ai.score:
+			result_txt = big_font.render("YOU WIN!", True, config.NEON_CYAN)
+		elif bird_player.score < bird_ai.score:
+			result_txt = big_font.render("AI WINS!", True, config.NEON_PINK)
+		else:
+			result_txt = big_font.render("DRAW (HÒA)!", True, config.TEXT_COLOR)
 
-    pygame.display.flip()
+		screen.blit(result_txt, (WIDTH // 2 - result_txt.get_width() // 2, HEIGHT // 2 - 20))
+		press_space_txt = font.render("Press SPACE to play again", True, config.TEXT_COLOR)
+		screen.blit(press_space_txt, (WIDTH // 2 - press_space_txt.get_width() // 2, HEIGHT // 2 + 40))
+
+	# --- J. Bắt sự kiện bàn phím ---
+	for event in pygame.event.get():
+		if event.type == pygame.QUIT:
+			running = False
+
+		if event.type == pygame.KEYDOWN:
+			if event.key == pygame.K_SPACE:
+				if pausing:
+					bird_player, bird_ai, tubes = reset_game()
+					pausing = False
+				else:
+					if bird_player.alive:
+						bird_player.fly_up()
+
+	pygame.display.flip()
 
 pygame.quit()

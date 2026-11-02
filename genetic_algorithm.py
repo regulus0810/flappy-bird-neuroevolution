@@ -28,7 +28,7 @@ class GeneticAlgorithm:
 		# Mutation gene: ech gene have 10% opportunity for small change
 		for i in range(len(child_chromosome)):
 			if random.uniform(0, 1) < mutation_rate:
-				child_chromosome[i] += random.gauss(mu=config.MUTATION_RATE, sigma=config.MUTATION_SIGMA)
+				child_chromosome[i] += random.gauss(mu=0.0, sigma=config.MUTATION_SIGMA)
 		return child_chromosome
 
 	def nex_generation(self, population):
@@ -37,11 +37,10 @@ class GeneticAlgorithm:
 		# 1. Get best birds from population
 		survivors = self.selection(population)
 		next_generation = []
-		bird_image = survivors[0].image
 
 		# 2. Keep the best individual bird (elitism)
 		best_bird = survivors[0]
-		elite = entities.Bird(config.BIRD_START_Y, bird_image)
+		elite = entities.Bird(config.BIRD_START_Y)
 		elite.chromosome = list(best_bird.chromosome)
 		next_generation.append(elite)
 
@@ -56,7 +55,7 @@ class GeneticAlgorithm:
 				while parent_dad == parent_mom:
 					parent_mom = random.choice(survivors)
 
-			child = entities.Bird(config.BIRD_START_Y, bird_image)
+			child = entities.Bird(config.BIRD_START_Y)
 			child.chromosome = self.crossover(parent_dad, parent_mom)
 			child.chromosome = self.mutate(child.chromosome)
 			next_generation.append(child)

@@ -2,18 +2,19 @@ import pygame
 import random
 import config
 import brain
-import numpy as np
 
 class Bird:
-	def __init__(self, y, image):
+	def __init__(self, y):
 		self.x = config.BIRD_X
 		self.y = y
+		self.width = config.BIRD_WIDTH
+		self.height = config.BIRD_HEIGHT
 		self.velocity = 0
+		self.gravity = config.GRAVITY
 		self.flap = config.FLAP_VELOCITY
-		self.image = image
 
 		# --- GA attributes ---
-		self.chromosome = np.random.uniform(-3.0, 3.0, size=config.NUM_PARAMETERS)
+		self.chromosome = [random.uniform(-3.0, 3.0) for _ in range(config.NUM_PARAMETERS)]
 		self.fitness = 0
 		self.alive = True
 		self.time_alive = 0
@@ -25,10 +26,10 @@ class Bird:
 
 	def fly_down(self):
 		self.y += self.velocity
-		self.velocity += config.GRAVITY
+		self.velocity += self.gravity
 
 	def get_rect(self):
-		return pygame.Rect(self.x, self.y, config.BIRD_WIDTH, config.BIRD_HEIGHT)
+		return pygame.Rect(self.x, self.y, self.width, self.height)
 
 	def think_and_act(self, inputs):
 		think = brain.NeuralBrain(self.chromosome)
@@ -37,32 +38,33 @@ class Bird:
 			self.fly_up()
 
 class Tube:
-	def __init__(self, x, image_top, image_down):
+	def __init__(self, x):
 		self.x = x
-		self.y = random.randint(int(config.SCREEN_HEIGHT  * 0.3), int(config.SCREEN_HEIGHT  * 0.6))
-		self.tube_image_top = image_top
-		self.tube_image_down = image_down
+		self.y = 0
+		self.width = config.TUBE_WIDTH
+		self.height = random.randint(int(config.SCREEN_HEIGHT  * 0.3), int(config.SCREEN_HEIGHT  * 0.6))
+		self.velocity = config.TUBE_VELOCITY
+		self.gate_height = config.GATE_HEIGHT
+		self.tube_interval = config.TUBE_INTERVAL
 		self.passed = False
 
-	def update(self):
-		self.x -= config.TUBE_VELOCITY
 
-	def get_rect(self):
-		top_rect = pygame.Rect(self.x, self.y - config.TUBE_HEIGHT, config.TUBE_WIDTH, config.TUBE_HEIGHT)
-		down_rect = pygame.Rect(self.x, self.y + config.GATE_HEIGHT, config.TUBE_WIDTH, config.TUBE_HEIGHT)
-		return top_rect, down_rect
+	# def get_rect(self):
+	# 	top_rect = pygame.Rect(self.x, self.y - config.TUBE_HEIGHT, config.TUBE_WIDTH, config.TUBE_HEIGHT)
+	# 	down_rect = pygame.Rect(self.x, self.y + config.GATE_HEIGHT, config.TUBE_WIDTH, config.TUBE_HEIGHT)
+	# 	return top_rect, down_rect
 
 # Get feature information of bird
 def get_inputs(bird, tube):
 	# index of bird
-	bird_y_center = bird.y + config.BIRD_HEIGHT // 2
+	bird_y_center = bird.y + bird.height // 2
 	# bird velocity
 	bird_velo = bird.velocity
 	# distance bird to nearest tube
-	dis_nearest_tube = (bird.x + config.BIRD_WIDTH) - tube.x
+	dis_nearest_tube = tube.x - (bird.x + bird.width)
 	# distance to top and bottum tube
-	dis_top_tube = bird.y - tube.y
-	dis_buttom_tube = (bird.y + config.BIRD_HEIGHT) - (tube.y + config.GATE_HEIGHT)
+	dis_top_tube = bird.y - tube.height
+	dis_buttom_tube = (tube.height + tube.gate_height) - (bird.y + bird.height)
 
 	return [
 		bird_y_center / config.SCREEN_HEIGHT,
@@ -125,7 +127,7 @@ if __name__ == "__main__":
 	print("=== KIỂM THỬ HÀM think_and_act() ===")
 	for tc in test_cases:
 		# Khởi tạo chim giả lập không cần surface pygame
-		bird = Bird(y=300, image=None)
+		bird = Bird(y=300)
 		bird.chromosome = tc["chromosome"]
 		bird.velocity = tc["initial_velocity"]
 

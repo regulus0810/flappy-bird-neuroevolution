@@ -1,5 +1,7 @@
 # 🐦 Flappy Bird AI - Genetic Algorithm & Neural Network from Scratch
 
+Nguồn tham khảo: https://github.com/felschatz/Sloppy-Block.git
+
 A Python/Pygame implementation of the classic Flappy Bird game powered by an AI agent trained via **Genetic Algorithm (GA)** and a **Custom Single-Layer Perceptron** built completely from scratch (no external ML black-box frameworks).
 
 Includes an interactive **Human vs. AI Solo Mode** to test your skills against the trained champion model!

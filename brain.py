@@ -3,9 +3,13 @@ import random
 import json
 
 class NeuralBrain:
-	def __init__(self, parameters):
+	def __init__(self, parameters, num_inputs=5, num_hidden=3, num_outputs=1)):
 		self.weights = np.array(parameters[:-1], dtype=float)
 		self.bias = float(parameters[-1])
+
+		self.num_inputs =num_inputs
+		self.num_hidden = num_hidden
+		self.num_outputs = num_outputs
 
 	def predict(self, inputs):
 		'''

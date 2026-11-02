@@ -16,8 +16,10 @@ BACKGROUND_COLOR = (0, 0, 0)
 
 # -- Setting of genetic algorithm
 POP_SIZE = 30
-NUM_INPUTS = 5     # number input of no ron
-NUM_PARAMETERS = 6
+NUM_INPUTS = 5      # 5 neuron đầu vào
+NUM_HIDDEN = 3      # 3 neuron lớp ẩn
+NUM_OUTPUTS = 1     # 1 neuron đầu ra
+NUM_PARAMETERS = (NUM_INPUTS * NUM_HIDDEN + NUM_HIDDEN) + (NUM_HIDDEN * NUM_OUTPUTS + NUM_OUTPUTS)
 MUTATION_RATE = 0.1
 MUTATION_SIGMA = 0.3
 

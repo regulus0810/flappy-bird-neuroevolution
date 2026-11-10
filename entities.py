@@ -36,7 +36,25 @@ class Bird:
 		output = think.predict(inputs)
 		if output > 0.45 and self.velocity > 0:
 			self.fly_up()
+# Thêm import ở đầu entities.py:
+from model_brain import mlp_brain
 
+# Thêm class MlpBird vào cuối file entities.py:
+class MlpBird(Bird):
+    def __init__(self, y):
+        super().__init__(y)
+        # 1. Cấp đúng 89 số gen ngẫu nhiên
+        self.chromosome = [random.uniform(-1.0, 1.0) for _ in range(config.MlpConfig.NUM_PARAMETERS)]
+        
+        # 2. Gắn bộ não MLP vào chim
+        self.brain = mlp_brain.MlpBrain()
+        self.brain.set_weights(self.chromosome)
+
+    def think_and_act(self, inputs):
+        # 3. Cho não MLP suy nghĩ và ra quyết định
+        output = self.brain.predict(inputs)
+        if output > 0.45 and self.velocity > 0:
+            self.fly_up()
 class Tube:
 	def __init__(self, x):
 		self.x = x

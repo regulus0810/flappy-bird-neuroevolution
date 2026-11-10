@@ -1,4 +1,5 @@
 import numpy as np
+import json  # <-- Thêm dòng này vào đầu file
 
 class LinearBrain:
 	def __init__(self, chromosome):
@@ -23,7 +24,7 @@ class LinearBrain:
 		output = 1 / (1 + np.exp(-y))
 
 		return output
-'''
+
 def save_best_bird(chromosome, filename="best_bird.json"):
 	# save best gene to txt
 	with open(filename, "w") as f:
@@ -35,7 +36,7 @@ def load_best_bird(filename="best_bird.json"):
 	with open(filename, "r") as f:
 		chromosome = json.load(f)
 	return chromosome
-'''
+
 
 if __name__ == "__main__":
 	WIDTH, HEIGHT, TUBE_GAP = 480, 640, 150

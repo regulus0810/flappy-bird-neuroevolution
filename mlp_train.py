@@ -3,12 +3,11 @@ import random
 
 import config
 import entities
-import genetic_algorithm
-import brain
+# Thay vì import linear_brain:
+from model_brain import mlp_brain, genetic_algorithm
 
 pygame.init()
 WIDTH, HEIGHT = config.SCREEN_WIDTH, config.SCREEN_HEIGHT
-FPS = config.FPS
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption('Flappy Bird')
 clock = pygame.time.Clock()
@@ -49,14 +48,14 @@ FLAP_VELOCITY = config.FLAP_VELOCITY 	# speed up of bird
 pausing = False     # paussing when score = 10
 
 # -- Setting of genetic algorithm --- 
-POP_SIZE = config.POP_SIZE
+POP_SIZE = config.MlpConfig.POP_SIZE
 NUM_INPUTS = config.NUM_INPUTS     # number input of no ron
 MUTATION_RATE = config.MUTATION_RATE
 MUTATION_SIGMA = config.MUTATION_SIGMA
 
 # Create a population and tubes
-population_bird = [entities.Bird(BIRD_START_Y) for _ in range(POP_SIZE)]
-
+population_bird = [entities.MlpBird(BIRD_START_Y) for _ in range(POP_SIZE)]
+  
 tubes = [
 	entities.Tube(tube1_x),
 	entities.Tube(tube2_x),
@@ -69,9 +68,8 @@ ga_model = genetic_algorithm.GeneticAlgorithm()
 generation = 1
 
 while running:		
-	clock.tick(FPS)
+	clock.tick(config.FPS)
 	screen.fill(BACKGROUND_COLOR)
-
 
 	# --- Update alive bird ---
 	alive_birds = [b for b in population_bird if b.alive]
@@ -107,7 +105,7 @@ while running:
 						bird.score += 1
 						if bird.score == 50:
 							pausing = True
-							brain.save_best_bird(bird.chromosome, "best_bird.json")
+							linemlp_brain.save_best_bird(bird.chromosome, "best_bird_mlp.json")
 				tube.passed = True
 
 		# 3. Generate new tubes
@@ -140,8 +138,6 @@ while running:
 		# Kiểm tra va chạm trần và sàn nhà
 		if bird.y <= 0 or bird.y + bird.height >= HEIGHT:
 			bird.alive = False
-
-
 
 
 	# --- Hiển thị thông tin ---

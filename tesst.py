@@ -1,5 +1,3 @@
-import random
+from model_brain import linear_brain, genetic_algorithm
 
-b = random.gauss(mu=0, sigma=0.3)
-
-print(b)
+ga_model = genetic_algorithm.GeneticAlgorithm()

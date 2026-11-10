@@ -27,4 +27,29 @@ class MlpBrain(nn.Module):
 
         return x
 
+    # --- THÊM 1: Cầu nối nạp 89 số gen vào các tầng PyTorch ---
+    def set_weight(self, chromosome):
+        if chromosome is not None:
+            tensor_weights = torch.tensor(chromosome, dtype=torch.float32)
+            nn.utils.vector_to_parameters(tensor_weights, self.parameters())
+
+    def predict(self, inputs):
+        with torch.no_grad():
+            x = torch.tensor(inputs, dtype=torch.float32)
+            output = self.forward(x)
+            return output.item()
+
+# --- THÊM 3: Lưu và đọc bộ gen của MLP ---
+def save_best_bird(chromosome, filename="best_bird_mlp.json"):
+    if hasattr(chromosome, "tolist"):
+        chromosome = chromosome.tolist()
+    with open(filename, "w") as f:
+        json.dump(chromosome, f, indent=4)
+    print(f"Lưu thành công mô hình MLP vào {filename}")
+def load_best_bird(filename="best_bird_mlp.json"):
+    with open(filename, "r") as f:
+        chromosome = json.load(f)
+    return chromosome
+
+
 

@@ -39,3 +39,12 @@ GATE_HEIGHT = 150	# distance of 2 tubes (tube and tube_inv)
 TUBE_INTERVAL = 250	# time next tube appear
 
 
+class LinearConfig:
+    
+
+class MlpConfig:
+    IN_FEATURES = 5
+    HIDDEN_1 = 8
+    HIDDEN_2 = 4
+    OUT_FEATURES = 1
+

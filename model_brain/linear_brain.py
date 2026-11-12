@@ -1,5 +1,5 @@
 import numpy as np
-import json  # <-- Thêm dòng này vào đầu file
+import json
 
 class LinearBrain:
 	def __init__(self, chromosome):

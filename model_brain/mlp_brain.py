@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import json
 
 class MlpBrain(nn.Module):
     def __init__(self, in_features=5, hidden_1=8, hidden_2=4, out_features=1):
@@ -28,7 +29,7 @@ class MlpBrain(nn.Module):
         return x
 
     # --- THÊM 1: Cầu nối nạp 89 số gen vào các tầng PyTorch ---
-    def set_weight(self, chromosome):
+    def set_weights(self, chromosome):
         if chromosome is not None:
             tensor_weights = torch.tensor(chromosome, dtype=torch.float32)
             nn.utils.vector_to_parameters(tensor_weights, self.parameters())

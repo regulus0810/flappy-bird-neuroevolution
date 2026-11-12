@@ -20,7 +20,7 @@ NUM_INPUTS = 5      # 5 neuron đầu vào
 NUM_HIDDEN = 3      # 3 neuron lớp ẩn
 NUM_OUTPUTS = 1     # 1 neuron đầu ra
 NUM_PARAMETERS = 6  # Mô hình tuyến tính cũ chỉ dùng đúng 6 tham số (5 weights + 1 bias)
-MUTATION_RATE = 0.5
+MUTATION_RATE = 0.1
 MUTATION_SIGMA = 0.3
 
 # --- Bird ---

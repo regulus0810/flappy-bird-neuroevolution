@@ -1,8 +1,8 @@
 import random
 
 import config
-import brain
 import entities
+from model_brain import linear_brain
 
 # --- Built Geenetic algorithm
 class GeneticAlgorithm:
@@ -19,8 +19,8 @@ class GeneticAlgorithm:
 			c_min = min(parent_dad.chromosome[i], parent_mom.chromosome[i])
 			c_max = max(parent_dad.chromosome[i], parent_mom.chromosome[i])
 			d = c_max - c_min
-			min_val = c_min - 0.15 * d
-			max_val = c_max + 0.15 * d
+			min_val = c_min - 0.2 * d
+			max_val = c_max + 0.2 * d
 			child_chromosome.append(random.uniform(min_val, max_val))
 		return child_chromosome
 
@@ -36,16 +36,19 @@ class GeneticAlgorithm:
 
 		# 1. Get best birds from population
 		survivors = self.selection(population)
-		next_generation = []
+		next_gene = []
+
+		# Auto get LinearBird or MlpBird
+		bird_cls = type(survivors[0])
+		pop_size = len(population)
 
 		# 2. Keep the best individual bird (elitism)
 		best_bird = survivors[0]
-		elite = entities.LinearBird(config.BIRD_START_Y)
-		elite.chromosome = list(best_bird.chromosome)
-		next_generation.append(elite)
+		elite = bird_cls(y=config.BIRD_START_Y, chromosome=best_bird.chromosome)
+		next_gene.append(elite)
 
 		# 3. Create the remaining offstring using crossover + mutate
-		while len(next_generation) < config.POP_SIZE:
+		while len(next_gene) < pop_size:
 			# Choose random father and mother from survivors
 			parent_dad = random.choice(survivors)
 			parent_mom = random.choice(survivors)
@@ -55,49 +58,11 @@ class GeneticAlgorithm:
 				while parent_dad == parent_mom:
 					parent_mom = random.choice(survivors)
 
-			child = entities.LinearBird(config.BIRD_START_Y)
-			child.chromosome = self.crossover(parent_dad, parent_mom)
-			child.chromosome = self.mutate(child.chromosome, config.MUTATION_RATE)
-			next_generation.append(child)
-		return next_generation
-
-	# def next_generation(self, population):
-	# 	# 1. Chọn lọc top chim sống sót
-	# 	survivors = self.selection(population)
-	# 	next_generation = []
-
-	# 	# TỰ ĐỘNG nhận diện đàn chim này là Bird (Linear) hay MlpBird:
-	# 	bird_class = type(survivors[0])
-
-	# 	# 2. Elitism: Giữ lại con tốt nhất
-	# 	best_bird = survivors[0]
-	# 	elite = bird_class(config.BIRD_START_Y)
-	# 	elite.chromosome = list(best_bird.chromosome)
-	# 	# Nạp lại gen vào não nếu chim có dùng não MlpBrain:
-	# 	if hasattr(elite, 'brain') and hasattr(elite.brain, 'set_weights'):
-	# 		elite.brain.set_weights(elite.chromosome)
-	# 	next_generation.append(elite)
-
-	# 	# 3. Sinh sản các con còn lại
-	# 	while len(next_generation) < len(population):
-	# 		parent_dad = random.choice(survivors)
-	# 		parent_mom = random.choice(survivors)
-
-	# 		if len(survivors) > 1:
-	# 			while parent_dad == parent_mom:
-	# 				parent_mom = random.choice(survivors)
-
-	# 		# Tạo chim con (tự động là MlpBird hoặc Bird):
-	# 		child = bird_class(config.BIRD_START_Y)
-	# 		child.chromosome = self.crossover(parent_dad, parent_mom)
-	# 		child.chromosome = self.mutate(child.chromosome)
-	# 		# Nạp lại gen vào não nếu là MlpBird:
-	# 		if hasattr(child, 'brain') and hasattr(child.brain, 'set_weights'):
-	# 			child.brain.set_weights(child.chromosome)
-	# 		next_generation.append(child)
-		
-	# 	return next_generation
-		
+			child_chrom = self.crossover(parent_dad, parent_mom)
+			child_chrom = self.mutate(child_chrom, config.MUTATION_RATE)
+			child = bird_cls(y=config.BIRD_START_Y, chromosome=child_chrom)
+			next_gene.append(child)
+		return next_gene
 
 if __name__ == "__main__":
 	population = [entities.Bird(20) for _ in range(30)]

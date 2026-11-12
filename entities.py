@@ -15,10 +15,14 @@ class Bird:
 		self.flap = config.FLAP_VELOCITY
 
 		# --- GA attributes ---
-		self.fitness = 0
 		self.alive = True
 		self.time_alive = 0
 		self.score = 0
+
+	@property
+	def fitness(self):
+		# Auto calculate fitness when it was called
+		return self.score * 100 + self.time_alive
 
 	def fly_up(self):
 		self.velocity = 0
@@ -33,10 +37,13 @@ class Bird:
 
 # Linear Brain
 class LinearBird(Bird):
-	def __init__(self, y):
+	def __init__(self, y, chromosome=None):
 		super().__init__(y)
 		# Gene of linear bird: 6 (5 weights + 1 bias)
-		self.chromosome = [random.uniform(-3.0, 3.0) for _ in range(config.NUM_PARAMETERS)]
+		if chromosome is not None:
+			self.chromosome = list(chromosome)
+		else:
+			self.chromosome = [random.uniform(-2.0, 2.0) for _ in range(config.NUM_PARAMETERS)]
 
 		self.brain = linear_brain.LinearBrain(self.chromosome)
 
@@ -47,20 +54,23 @@ class LinearBird(Bird):
 
 # Mlp Brain
 class MlpBird(Bird):
-    def __init__(self, y):
-        super().__init__(y)
-        # 1. Cấp đúng 89 số gen ngẫu nhiên
-        self.chromosome = [random.uniform(-1.0, 1.0) for _ in range(config.MlpConfig.NUM_PARAMETERS)]
-        
-        # 2. Gắn bộ não MLP vào chim
-        self.brain = mlp_brain.MlpBrain()
-        self.brain.set_weights(self.chromosome)
+	def __init__(self, y, chromosome=None):
+		super().__init__(y)
+		# 1. Cấp đúng 89 số gen ngẫu nhiên
+		if chromosome is not None:
+			self.chromosome = list(chromosome)
+		else:
+			self.chromosome = [random.uniform(-1.0, 1.0) for _ in range(config.MlpConfig.NUM_PARAMETERS)]
+		
+		# 2. Gắn bộ não MLP vào chim
+		self.brain = mlp_brain.MlpBrain()
+		self.brain.set_weights(self.chromosome)
 
-    def think_and_act(self, inputs):
-        # 3. Cho não MLP suy nghĩ và ra quyết định
-        output = self.brain.predict(inputs)
-        if output > 0.45 and self.velocity > 0:
-            self.fly_up()
+	def think_and_act(self, inputs):
+		# 3. Cho não MLP suy nghĩ và ra quyết định
+		output = self.brain.predict(inputs)
+		if output > 0.45 and self.velocity > 0:
+			self.fly_up()
 
 class Tube:
 	def __init__(self, x):
@@ -100,7 +110,12 @@ def get_inputs(bird, tube):
 	]
 
 if __name__ == "__main__":
-	# 1. Bộ gene kiểm thử
+	test_bird = LinearBird(y=300)
+
+	test_bird.score = 3
+	test_bird.time_alive = 150
+	print(test_bird.fitness)
+
 	BEST_CHROMOSOME = [
 		-0.15276927852520564,
 		0.10256978306696486,
@@ -110,64 +125,57 @@ if __name__ == "__main__":
 		0.026371543632180305,
 	]
 
-	# 2. Danh sách các test cases
 	test_cases = [
 		{
-			"name": "Case 1: Bias cao + chim đang rơi -> Phải nhảy",
+			"name": "Case 1: Bias cao + chim đang rơi -> PHẢI NHẢY",
 			"chromosome": [0, 0, 0, 0, 0, 2.0],
 			"inputs": [0.5, 0.3, 0.4, 0.1, 0.1],
 			"initial_velocity": 4.0,
 			"expected_act": True,
 		},
 		{
-			"name": "Case 2: Bias thấp + chim đang rơi -> Không nhảy",
+			"name": "Case 2: Bias thấp + chim đang rơi -> KHÔNG NHẢY",
 			"chromosome": [0, 0, 0, 0, 0, -2.0],
 			"inputs": [0.5, 0.3, 0.4, 0.1, 0.1],
 			"initial_velocity": 4.0,
 			"expected_act": False,
 		},
 		{
-			"name": "Case 3: Output cao nhưng chim đang bay lên (vel <= 0) -> Không nhảy",
+			"name": "Case 3: Output cao nhưng chim đang bay lên (vel <= 0) -> KHÔNG ĐƯỢC NHẢY ĐÈ",
 			"chromosome": [0, 0, 0, 0, 0, 2.0],
 			"inputs": [0.5, -0.4, 0.4, 0.1, 0.1],
 			"initial_velocity": -5.0,
 			"expected_act": False,
 		},
 		{
-			"name": "Case 4: Game thực tế - Rơi thấp dưới khe hở (best_bird.json)",
+			"name": "Case 4: Gen thực tế - Rơi thấp dưới khe hở -> PHẢI NHẢY",
 			"chromosome": BEST_CHROMOSOME,
 			"inputs": [0.68, 0.60, 0.25, 0.28, -0.12],
 			"initial_velocity": 6.0,
 			"expected_act": True,
 		},
 		{
-			"name": "Case 5: Game thực tế - Đang ở vị trí cao (best_bird.json)",
+			"name": "Case 5: Gen thực tế - Vị trí đang cao và đang bay lên -> KHÔNG NHẢY",
 			"chromosome": BEST_CHROMOSOME,
 			"inputs": [0.20, -0.50, 0.35, -0.20, 0.38],
 			"initial_velocity": -5.0,
 			"expected_act": False,
 		},
 	]
-
-	print("=== KIỂM THỬ HÀM think_and_act() ===")
 	for tc in test_cases:
-		# Khởi tạo chim giả lập không cần surface pygame
 		bird = LinearBird(y=300)
 		bird.chromosome = tc["chromosome"]
+		# CẬP NHẬT LẠI NÃO THEO GEN MỚI ĐỂ TEST CHÍNH XÁC:
+		bird.brain = linear_brain.LinearBrain(bird.chromosome)
 		bird.velocity = tc["initial_velocity"]
-
-		# Tính toán trước output của mạng để đối chiếu
-		nb = linear_brain.LinearBrain(bird.chromosome)
-		predicted_output = nb.predict(tc["inputs"])
-
-		# Thực thi hàm
+		# Dự đoán output của nơ-ron
+		predicted_output = bird.brain.predict(tc["inputs"])
+		# Cho chim suy nghĩ và hành động
 		bird.think_and_act(tc["inputs"])
-		acted = bird.velocity == -bird.flap
-
-		passed = acted == tc["expected_act"]
+		acted = (bird.velocity == -bird.flap)
+		passed = (acted == tc["expected_act"])
 		status = "PASS" if passed else "FAIL"
-
 		print(f"\n[{status}] {tc['name']}")
-		print(f"  - Output nơ-ron: {predicted_output:.4f} (Ngưỡng: > 0.45)")
-		print(f"  - Vận tốc ban đầu: {tc['initial_velocity']} -> Vận tốc sau xử lý: {bird.velocity}")
-		print(f"  - Hành động: {'NHẢY (fly_up)' if acted else 'KHÔNG NHẢY'}")
+		print(f"  - Output nơ-ron: {predicted_output:.4f} (Ngưỡng kích hoạt: > 0.45)")
+		print(f"  - Vận tốc: {tc['initial_velocity']} -> Sau xử lý: {bird.velocity}")
+		print(f"  - Kết quả: {'NHẢY' if acted else 'KHÔNG NHẢY'}")

@@ -4,7 +4,7 @@ import random
 import config
 import entities
 import genetic_algorithm
-from model_brain import linear_brain
+from model_brain import linear_brain, mlp_brain
 
 pygame.init()
 WIDTH, HEIGHT = config.SCREEN_WIDTH, config.SCREEN_HEIGHT
@@ -30,10 +30,6 @@ TUBE_VELOCITY = config.TUBE_VELOCITY
 GATE_HEIGHT = config.GATE_HEIGHT	# distance of 2 tubes (tube and tube_inv)
 TUBE_INTERVAL = config.TUBE_INTERVAL	# time next tube appear
 
-tube1_x = WIDTH
-tube2_x = tube1_x + TUBE_INTERVAL
-tube3_x = tube2_x + TUBE_INTERVAL
-tube4_x = tube3_x + TUBE_INTERVAL
 
 
 # --- Bird ---
@@ -54,8 +50,27 @@ MUTATION_RATE = config.MUTATION_RATE
 MUTATION_SIGMA = config.MUTATION_SIGMA
 
 # Create a population and tubes
-population_bird = [entities.LinearBird(BIRD_START_Y) for _ in range(POP_SIZE)]
+# Chọn mô hình muốn train: "linear" hoặc "mlp"
+MODEL_TYPE = "mlp"
 
+if MODEL_TYPE == "mlp":
+    BirdClass = entities.MlpBird
+    POP_SIZE = config.MlpConfig.POP_SIZE
+    save_model_func = mlp_brain.save_best_bird
+    SAVE_FILE = "best_bird_mlp.json"
+else:
+    BirdClass = entities.LinearBird
+    POP_SIZE = config.POP_SIZE
+    save_model_func = linear_brain.save_best_bird
+    SAVE_FILE = "best_bird.json"
+
+# Khởi tạo quần thể ban đầu:
+population_bird = [BirdClass(BIRD_START_Y) for _ in range(POP_SIZE)]
+
+tube1_x = BIRD_X + 240
+tube2_x = tube1_x + TUBE_INTERVAL
+tube3_x = tube2_x + TUBE_INTERVAL
+tube4_x = tube3_x + TUBE_INTERVAL
 tubes = [
 	entities.Tube(tube1_x),
 	entities.Tube(tube2_x),
@@ -68,13 +83,12 @@ ga_model = genetic_algorithm.GeneticAlgorithm()
 generation = 1
 
 while running:		
-	clock.tick(config.FPS)
+	# clock.tick(config.FPS)
+	clock.tick(0)
 	screen.fill(BACKGROUND_COLOR)
 
 	# --- Update alive bird ---
 	alive_birds = [b for b in population_bird if b.alive]
-
-	
 
 	# --- Draw all survival bird ---
 	for bird in alive_birds:
@@ -107,9 +121,9 @@ while running:
 					if bird.alive:
 						bird.score += 1
 						# Check score to paussing program
-						if bird.score == 50:
+						if bird.score == 100:
 							pausing = True
-							linear_brain.save_best_bird(bird.chromosome, "best_bird.json")
+							save_model_func(bird.chromosome, SAVE_FILE)
 				tube.passed = True
 
 		# 3. Generate new tubes
@@ -131,7 +145,7 @@ while running:
 		if nearest_tube:
 			# Draw 2 line from bird center to top_tube and bottom_tube
 			pygame.draw.line(screen, NEON_PINK, (bird.x + bird.width // 2, bird.y + bird.height // 2), (nearest_tube.x, nearest_tube.height), width=2)
-			pygame.draw.line(screen, NEON_CYAN, (bird.x + bird.width  // 2, bird.y + bird.height // 2), (nearest_tube.x, nearest_tube.height + nearest_tube.gate_height), width=2)
+			pygame.draw.line(screen, NEON_CYAN, (bird.x + bird.width // 2, bird.y + bird.height // 2), (nearest_tube.x, nearest_tube.height + nearest_tube.gate_height), width=2)
 			inputs = entities.get_inputs(bird, nearest_tube)
 			bird.think_and_act(inputs)
 
@@ -156,10 +170,6 @@ while running:
 	
 	# --- if all survival bird dead -> create new generation
 	if len(alive_birds) == 0:
-		# Calculate fitness for each bird
-		for bird in population_bird:
-			bird.fitness = bird.score * 100 + bird.time_alive
-
 		# create new generation
 		population_bird = ga_model.next_generation(population_bird)
 		generation += 1
@@ -168,7 +178,8 @@ while running:
 		tubes = [
 			entities.Tube(tube1_x),
 			entities.Tube(tube2_x),
-			entities.Tube(tube3_x)
+			entities.Tube(tube3_x),
+			entities.Tube(tube4_x)
 		]
 
 	# -- Event button ---

@@ -4,7 +4,8 @@ import os
 
 import config
 import entities
-import brain
+from model_brain import linear_brain
+
 
 # 1. Khởi tạo Pygame và Cửa sổ Game
 pygame.init()
@@ -53,11 +54,11 @@ else:
 
 # 4. Hàm khởi tạo / Reset ván đấu
 def reset_game():
-	player = entities.Bird(config.BIRD_START_Y)
-	ai = entities.Bird(config.BIRD_START_Y)
+	player = entities.LinearBird(config.BIRD_START_Y)
+	ai = entities.LinearBird(config.BIRD_START_Y)
 
 	# Nạp bộ gene tốt nhất cho AI từ file best_bird.json
-	ai.chromosome = brain.load_best_bird("best_bird.json")
+	ai.chromosome = linear_brain.load_best_bird("best_bird.json")
 
 	# Khởi tạo 4 cột để phủ kín chiều rộng màn hình 700px
 	tubes_list = [entities.Tube(WIDTH + i * config.TUBE_INTERVAL) for i in range(4)]

@@ -1,7 +1,8 @@
 import pygame
 import random
 import config
-import brain
+from model_brain import linear_brain
+from model_brain import mlp_brain
 
 class Bird:
 	def __init__(self, y):
@@ -14,7 +15,6 @@ class Bird:
 		self.flap = config.FLAP_VELOCITY
 
 		# --- GA attributes ---
-		self.chromosome = [random.uniform(-3.0, 3.0) for _ in range(config.NUM_PARAMETERS)]
 		self.fitness = 0
 		self.alive = True
 		self.time_alive = 0
@@ -31,15 +31,21 @@ class Bird:
 	def get_rect(self):
 		return pygame.Rect(self.x, self.y, self.width, self.height)
 
+# Linear Brain
+class LinearBird(Bird):
+	def __init__(self, y):
+		super().__init__(y)
+		# Gene of linear bird: 6 (5 weights + 1 bias)
+		self.chromosome = [random.uniform(-3.0, 3.0) for _ in range(config.NUM_PARAMETERS)]
+
+		self.brain = linear_brain.LinearBrain(self.chromosome)
+
 	def think_and_act(self, inputs):
-		think = brain.NeuralBrain(self.chromosome)
-		output = think.predict(inputs)
+		output = self.brain.predict(inputs)
 		if output > 0.45 and self.velocity > 0:
 			self.fly_up()
-# Thêm import ở đầu entities.py:
-from model_brain import mlp_brain
 
-# Thêm class MlpBird vào cuối file entities.py:
+# Mlp Brain
 class MlpBird(Bird):
     def __init__(self, y):
         super().__init__(y)
@@ -55,6 +61,7 @@ class MlpBird(Bird):
         output = self.brain.predict(inputs)
         if output > 0.45 and self.velocity > 0:
             self.fly_up()
+
 class Tube:
 	def __init__(self, x):
 		self.x = x
@@ -145,12 +152,12 @@ if __name__ == "__main__":
 	print("=== KIỂM THỬ HÀM think_and_act() ===")
 	for tc in test_cases:
 		# Khởi tạo chim giả lập không cần surface pygame
-		bird = Bird(y=300)
+		bird = LinearBird(y=300)
 		bird.chromosome = tc["chromosome"]
 		bird.velocity = tc["initial_velocity"]
 
 		# Tính toán trước output của mạng để đối chiếu
-		nb = brain.NeuralBrain(bird.chromosome)
+		nb = linear_brain.LinearBrain(bird.chromosome)
 		predicted_output = nb.predict(tc["inputs"])
 
 		# Thực thi hàm

@@ -3,7 +3,8 @@ import random
 
 import config
 import entities
-from model_brain import linear_brain, genetic_algorithm
+import genetic_algorithm
+from model_brain import linear_brain
 
 pygame.init()
 WIDTH, HEIGHT = config.SCREEN_WIDTH, config.SCREEN_HEIGHT
@@ -53,7 +54,7 @@ MUTATION_RATE = config.MUTATION_RATE
 MUTATION_SIGMA = config.MUTATION_SIGMA
 
 # Create a population and tubes
-population_bird = [entities.Bird(BIRD_START_Y) for _ in range(POP_SIZE)]
+population_bird = [entities.LinearBird(BIRD_START_Y) for _ in range(POP_SIZE)]
 
 tubes = [
 	entities.Tube(tube1_x),
@@ -73,8 +74,11 @@ while running:
 	# --- Update alive bird ---
 	alive_birds = [b for b in population_bird if b.alive]
 
+	
+
 	# --- Draw all survival bird ---
 	for bird in alive_birds:
+		print(alive_birds[0].chromosome)
 		bird_rect = pygame.draw.rect(screen, BIRD_COLOR, (bird.x, bird.y, bird.width, bird.height))
 
 	# --- Draw tube ---
@@ -102,6 +106,7 @@ while running:
 				for bird in alive_birds:
 					if bird.alive:
 						bird.score += 1
+						# Check score to paussing program
 						if bird.score == 50:
 							pausing = True
 							linear_brain.save_best_bird(bird.chromosome, "best_bird.json")
@@ -156,7 +161,7 @@ while running:
 			bird.fitness = bird.score * 100 + bird.time_alive
 
 		# create new generation
-		population_bird = ga_model.nex_generation(population_bird)
+		population_bird = ga_model.next_generation(population_bird)
 		generation += 1
 
 		# Reset tube

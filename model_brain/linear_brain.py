@@ -25,19 +25,6 @@ class LinearBrain:
 
 		return output
 
-def save_best_bird(chromosome, filename="best_bird.json"):
-	# save best gene to txt
-	with open(filename, "w") as f:
-		json.dump(chromosome, f, indent=4)
-	print(f"Save model successfully to {filename}")
-
-def load_best_bird(filename="best_bird.json"):
-	# Read chromosome from best_bird.txt
-	with open(filename, "r") as f:
-		chromosome = json.load(f)
-	return chromosome
-
-
 if __name__ == "__main__":
 	WIDTH, HEIGHT, TUBE_GAP = 480, 640, 150
 	chromos = [-1.0, 2.0, 0.0, -3.0, 6.0, -1.0]

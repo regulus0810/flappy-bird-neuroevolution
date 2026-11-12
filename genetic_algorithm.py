@@ -1,11 +1,12 @@
 import random
-
 import config
 import entities
-from model_brain import linear_brain
 
-# --- Built Geenetic algorithm
 class GeneticAlgorithm:
+	def __init__(self, mutation_rate=None, mutation_sigma=None):
+		self.mutation_rate = mutation_rate
+		self.mutation_sigma = mutation_sigma
+
 	def selection(self, population):
 		# Get top 50% individual bird have best fitness
 		sorted_pop = sorted(population, key=lambda b: b.fitness, reverse=True)
@@ -24,11 +25,11 @@ class GeneticAlgorithm:
 			child_chromosome.append(random.uniform(min_val, max_val))
 		return child_chromosome
 
-	def mutate(self, child_chromosome, mutation_rate):
+	def mutate(self, child_chromosome, mutation_rate, mutation_sigma):
 		# Mutation gene: ech gene have 10% opportunity for small change
 		for i in range(len(child_chromosome)):
 			if random.uniform(0, 1) < mutation_rate:
-				child_chromosome[i] += random.gauss(mu=0.0, sigma=config.MUTATION_SIGMA)
+				child_chromosome[i] += random.gauss(mu=0.0, sigma=mutation_sigma)
 		return child_chromosome
 
 	def next_generation(self, population):
@@ -42,6 +43,13 @@ class GeneticAlgorithm:
 		bird_cls = type(survivors[0])
 		pop_size = len(population)
 
+		if bird_cls == entities.MlpBird:
+			rate = self.mutation_rate if self.mutation_rate is not None else config.MlpConfig.MUTATION_RATE
+			sigma = self.mutation_sigma if self.mutation_sigma is not None else config.MlpConfig.MUTATION_SIGMA
+		else:
+			rate = self.mutation_rate if self.mutation_rate is not None else config.LinearConfig.MUTATION_RATE
+			sigma = self.mutation_sigma if self.mutation_sigma is not None else config.LinearConfig.MUTATION_SIGMA
+
 		# 2. Keep the best individual bird (elitism)
 		best_bird = survivors[0]
 		elite = bird_cls(y=config.BIRD_START_Y, chromosome=best_bird.chromosome)
@@ -49,24 +57,13 @@ class GeneticAlgorithm:
 
 		# 3. Create the remaining offstring using crossover + mutate
 		while len(next_gene) < pop_size:
-			# Choose random father and mother from survivors
 			parent_dad = random.choice(survivors)
 			parent_mom = random.choice(survivors)
-
-			# Check
 			if len(survivors) > 1:
 				while parent_dad == parent_mom:
 					parent_mom = random.choice(survivors)
-
 			child_chrom = self.crossover(parent_dad, parent_mom)
-			child_chrom = self.mutate(child_chrom, config.MUTATION_RATE)
+			child_chrom = self.mutate(child_chrom, mutation_rate=rate, mutation_sigma=sigma)
 			child = bird_cls(y=config.BIRD_START_Y, chromosome=child_chrom)
 			next_gene.append(child)
 		return next_gene
-
-if __name__ == "__main__":
-	population = [entities.Bird(20) for _ in range(30)]
-	ga = GeneticAlgorithm()
-	survivors = ga.selection(population)
-	bird_class = type(survivors[0])
-	print(bird_class)

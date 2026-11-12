@@ -1,4 +1,4 @@
-# 🐦 Flappy Bird AI — Neuroevolution with Genetic Algorithm
+# Flappy Bird AI — Neuroevolution with Genetic Algorithm
 
 <div align="center">
 
@@ -15,13 +15,13 @@
 
 ---
 
-## 📸 Demo
+## Demo
 
 ![Flappy Bird AI Demo](demo.gif)
 
 ---
 
-## 🎯 Project Overview
+## Project Overview
 
 This project applies **Neuroevolution** to solve the classic Flappy Bird game. Instead of gradient-based learning, two neural network architectures evolve their weights through a **custom Genetic Algorithm (GA)** — survival of the fittest, generation by generation.
 
@@ -36,20 +36,20 @@ Two AI "brains" are implemented and trained independently, then compete head-to-
 
 ---
 
-## ✨ Key Highlights
+## Key Highlights
 
-- 🧬 **Genetic Algorithm from scratch** — no NEAT library, no external EA framework
-- 🧠 **Two neural architectures compared** — simple Perceptron vs deep MLP, both trained by evolution
-- 🔁 **BLX-α Crossover** — blend crossover explores the gene space beyond parent bounds
-- 🏆 **Elitism** — the best individual is always preserved across generations
-- 🎮 **3-mode interactive arena** — AI vs AI, User vs Linear Bird, User vs MLP Bird
-- ⚡ **Fast-forward training** — toggle max-speed mode with `[F]` key
-- 📐 **Physics-matched evaluation** — play mode exactly mirrors training physics for fair AI comparison
-- 💾 **Auto-checkpoint saving** — best chromosome saved to JSON when score milestone is reached
+- **Genetic Algorithm from scratch** — no NEAT library, no external EA framework
+- **Two neural architectures compared** — simple Perceptron vs deep MLP, both trained by evolution
+- **BLX-α Crossover** — blend crossover explores the gene space beyond parent bounds
+- **Elitism** — the best individual is always preserved across generations
+- **3-mode interactive arena** — AI vs AI, User vs Linear Bird, User vs MLP Bird
+- **Fast-forward training** — toggle max-speed mode with `[F]` key
+- **Physics-matched evaluation** — play mode exactly mirrors training physics for fair AI comparison
+- **Auto-checkpoint saving** — best chromosome saved to JSON when score milestone is reached
 
 ---
 
-## 🏗️ Architecture Deep Dive
+## Architecture Deep Dive
 
 ### Input Features (5 normalized inputs)
 
@@ -100,7 +100,7 @@ Input(5) ──► FC(5→8) ──► ReLU ──► FC(8→4) ──► ReLU �
 
 ---
 
-## 🧬 Genetic Algorithm Pipeline
+## Genetic Algorithm Pipeline
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -137,50 +137,14 @@ Input(5) ──► FC(5→8) ──► ReLU ──► FC(8→4) ──► ReLU �
 | Mutation rate | 10% | 15% |
 | Mutation sigma (σ) | 0.3 | 0.2 |
 | Crossover | BLX-α (α=0.2) | BLX-α (α=0.2) |
-| Elitism | ✅ Top 1 | ✅ Top 1 |
+| Elitism | Top 1 | Top 1 |
 
 > [!TIP]
 > MLP uses a slightly higher mutation rate but lower sigma — a wider search net with smaller per-step jumps, which helps navigate a larger 89-dimensional gene space without overshooting.
 
 ---
 
-## 📂 Project Structure
-
-```
-flappy-bird-game/
-│
-├── 📄 config.py               # All constants (screen, physics, GA params)
-│   │                          #   LinearConfig / MlpConfig classes
-│   └──                        #   Auto-creates checkpoints/ on import
-│
-├── 📄 entities.py             # Bird base class + LinearBird / MlpBird / Tube
-│   │                          #   get_inputs() — 5 normalized sensor features
-│   └──                        #   save_best_bird() / load_best_bird() on Bird
-│
-├── 📄 genetic_algorithm.py    # GeneticAlgorithm class
-│   │                          #   selection(), crossover(), mutate()
-│   └──                        #   next_generation() — auto-detects Linear vs MLP
-│
-├── 📄 train.py                # Main training loop (Pygame visualization)
-│   └──                        #   Set MODEL_TYPE = "linear" | "mlp" to choose model
-│
-├── 📄 play_flappy_bird.py     # Interactive play — 3 game modes
-│
-├── 📁 model_brain/
-│   ├── linear_brain.py        # LinearBrain (NumPy dot product + sigmoid)
-│   └── mlp_brain.py           # MlpBrain (PyTorch nn.Module, 3-layer MLP)
-│
-├── 📁 checkpoints/
-│   ├── best_bird_linear.json  # Saved Linear chromosome (6 floats)
-│   └── best_bird_mlp.json     # Saved MLP chromosome (89 floats)
-│
-├── 📁 assets/                 # Sprites (bird PNGs, pipe, background)
-└── 📄 requirements.txt
-```
-
----
-
-## 🚀 Quick Start
+## Quick Start
 
 ### 1. Installation
 
@@ -237,7 +201,7 @@ Play controls:
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Library | Version | Usage |
 |---------|---------|-------|
@@ -251,7 +215,7 @@ Play controls:
 
 ---
 
-## 📊 Model Comparison
+## Model Comparison
 
 | Attribute | Linear Perceptron | MLP (3-layer) |
 |-----------|------------------|---------------|
@@ -265,7 +229,7 @@ Play controls:
 
 ---
 
-## 💡 Why This Project Matters
+## Why This Project Matters
 
 This project demonstrates several important concepts at the intersection of **game AI**, **evolutionary computation**, and **software engineering**:
 
@@ -277,7 +241,7 @@ This project demonstrates several important concepts at the intersection of **ga
 
 ---
 
-## 🔭 Future Work
+## Future Work
 
 - [ ] **NEAT (NeuroEvolution of Augmenting Topologies)** — evolve topology as well as weights
 - [ ] **Real-time fitness graph** — live Matplotlib/Pygame plot of best fitness per generation
@@ -288,7 +252,7 @@ This project demonstrates several important concepts at the intersection of **ga
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License — see [`LICENSE`](LICENSE) for details.
 

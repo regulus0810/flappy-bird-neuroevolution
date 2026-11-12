@@ -3,7 +3,7 @@ import os
 # ---------- 1. SCREEN CONFIG ----------
 SCREEN_WIDTH = 700
 SCREEN_HEIGHT = 700
-FPS = 60
+FPS = 120
 
 # --- Color ---
 TEXT_COLOR = (235, 240, 255)
@@ -46,7 +46,7 @@ class LinearConfig:
     OUT_FEATURES = 1
     # 5 trọng số (weights) + 1 độ lệch (bias) = 6 tham số:
     NUM_PARAMETERS = 6
-    POP_SIZE = 30
+    POP_SIZE = 100
     MUTATION_RATE = 0.1
     MUTATION_SIGMA = 0.3
     CHECKPOINT_FILE = LINEAR_CHECKPOINT
@@ -59,7 +59,7 @@ class MlpConfig:
     OUT_FEATURES = 1
     # 5*8 + 8 + 8*4 + 4 + 4*1 + 1 = 89 tham số:
     NUM_PARAMETERS = 89
-    POP_SIZE = 40          # Số lượng cá thể để khám phá tốt không gian 89 gen
+    POP_SIZE = 100          # Số lượng cá thể để khám phá tốt không gian 89 gen
     MUTATION_RATE = 0.15   # Tỉ lệ đột biến gen
     MUTATION_SIGMA = 0.2   # Độ lệch chuẩn đột biến nhỏ hơn để hội tụ tốt
     CHECKPOINT_FILE = MLP_CHECKPOINT

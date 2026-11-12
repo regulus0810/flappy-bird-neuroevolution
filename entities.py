@@ -42,7 +42,7 @@ class Bird:
 	# Bird think and decided flap or not?
 	def think_and_act(self, inputs):
 		output = self.brain.predict(inputs)
-		if output > 0.45 and self.velocity > 0:
+		if output > 0.5 and self.velocity > 0:
 			self.fly_up()
 
 	# Save best chromosome of bird to JSON file

@@ -16,7 +16,7 @@ small_font = pygame.font.SysFont("sans", 16)
 
 # ---------- 2. Model train config ----------
 # Chọn mô hình muốn train: "linear" hoặc "mlp"
-MODEL_TYPE = "linear"
+MODEL_TYPE = "mlp"
 
 if MODEL_TYPE == "mlp":
 	BirdClass = entities.MlpBird
@@ -40,7 +40,7 @@ running = True
 pausing = False
 fast_mode = True
 generation = 1
-max_score = 200
+max_score = 10000
 
 # ---------- 4. While loop train ----------
 while running:		

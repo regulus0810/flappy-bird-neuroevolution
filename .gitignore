@@ -2,30 +2,9 @@
 __pycache__/
 *.py[cod]
 *$py.class
-
-# C extensions
 *.so
 
-# Distribution / packaging
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-share/python-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-
-# Virtual environments
+# Virtual Environments
 venv/
 .venv/
 env/
@@ -38,15 +17,30 @@ venv.bak/
 .idea/
 *.swp
 *.swo
+*.sublime-project
+*.sublime-workspace
 
 # Operating System files
+.DS_Store
 Thumbs.db
 ehthumbs.db
-Desktop.ini
-.DS_Store
+[Dd]esktop.ini
 
-# NEAT Checkpoints (Large checkpoint files generated during training)
-neat-checkpoint-*
-
-# Logs & temp files
+# Logs & Temporary files
 *.log
+*.tmp
+
+# AI / ML Model Checkpoints
+# Ignore all new/temporary checkpoints generated during training,
+# but explicitly track the 2 pre-trained best models for Linear & MLP:
+checkpoints/*
+!checkpoints/best_bird_linear.json
+!checkpoints/best_bird_mlp.json
+!checkpoints/.gitkeep
+
+# Ignore common large weight formats if created
+*.pt
+*.pth
+*.ckpt
+*.onnx
+*.pkl
